@@ -1,0 +1,56 @@
+.background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.55;
+  will-change: transform;
+  animation: drift 16s ease-in-out infinite alternate;
+}
+
+.orbOne {
+  top: -14vmax;
+  left: -10vmax;
+  width: 42vmax;
+  height: 42vmax;
+  background: var(--orb-1);
+}
+
+.orbTwo {
+  top: 8vmax;
+  right: -16vmax;
+  width: 38vmax;
+  height: 38vmax;
+  background: var(--orb-2);
+  animation-duration: 20s;
+  animation-delay: -6s;
+}
+
+.orbThree {
+  bottom: -18vmax;
+  left: 24vmax;
+  width: 34vmax;
+  height: 34vmax;
+  background: var(--orb-3);
+  animation-duration: 24s;
+  animation-delay: -12s;
+}
+
+@keyframes drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4vmax, -3vmax, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-3vmax, 4vmax, 0) scale(0.96);
+  }
+}

@@ -1,0 +1,92 @@
+:root {
+  --bg: #eef4ff;
+  --surface: #ffffff;
+  --surface-translucent: rgba(255, 255, 255, 0.82);
+  --surface-strong: rgba(255, 255, 255, 0.92);
+  --text: #1f2a44;
+  --muted: #64748b;
+  --primary: #6c5ce7;
+  --primary-contrast: #ffffff;
+  --primary-soft: rgba(108, 92, 231, 0.12);
+  --accent: #ffb703;
+  --green: #2ec27e;
+  --green-soft: rgba(46, 194, 126, 0.22);
+  --red: #ff5c7a;
+  --red-soft: rgba(255, 92, 122, 0.18);
+  --radius: 22px;
+  --shadow: 0 12px 30px rgba(31, 42, 68, 0.12);
+  --border: rgba(31, 42, 68, 0.12);
+  --border-strong: rgba(31, 42, 68, 0.2);
+  --border-soft: rgba(31, 42, 68, 0.06);
+  --chip-bg: rgba(31, 42, 68, 0.06);
+  --card-front-bg: #ffffff;
+  --card-front-border: rgba(31, 42, 68, 0.06);
+  --card-front-shadow: inset 0 -6px 0 rgba(31, 42, 68, 0.06),
+    0 8px 16px rgba(31, 42, 68, 0.14);
+  --card-back: linear-gradient(145deg, #7c6cf0, #4f8df7 55%, #35c2e8);
+  --card-back-border: rgba(255, 255, 255, 0.5);
+  --card-back-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.14),
+    0 8px 16px rgba(76, 110, 245, 0.28);
+  --card-back-star: rgba(255, 255, 255, 0.92);
+  --play-gradient: linear-gradient(120deg, var(--primary), #00b8d9);
+  --play-shadow: 0 12px 24px rgba(108, 92, 231, 0.35);
+  --play-shadow-hover: 0 16px 30px rgba(108, 92, 231, 0.42);
+  --title-gradient: linear-gradient(120deg, var(--primary), #00b8d9);
+  --focus-ring: rgba(108, 92, 231, 0.15);
+  --orb-1: rgba(108, 92, 231, 0.35);
+  --orb-2: rgba(0, 184, 217, 0.3);
+  --orb-3: rgba(255, 183, 3, 0.28);
+  --body-bg:
+    radial-gradient(circle at 12% 12%, #ffe6f0 0, transparent 42%),
+    radial-gradient(circle at 88% 8%, #dff4ff 0, transparent 46%),
+    radial-gradient(circle at 50% 105%, #e6fff2 0, transparent 52%),
+    linear-gradient(160deg, #f7fbff 0%, #eef4ff 100%);
+  color-scheme: light;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+}
+
+:root[data-theme='dark'] {
+  --bg: #0b1220;
+  --surface: #16203a;
+  --surface-translucent: rgba(22, 32, 58, 0.85);
+  --surface-strong: rgba(26, 38, 66, 0.95);
+  --text: #e6ecff;
+  --muted: #9aa8c7;
+  --primary: #8b7cf6;
+  --primary-contrast: #ffffff;
+  --primary-soft: rgba(139, 124, 246, 0.18);
+  --accent: #ffc93c;
+  --green: #34d399;
+  --green-soft: rgba(52, 211, 153, 0.22);
+  --red: #fb7185;
+  --red-soft: rgba(251, 113, 133, 0.22);
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  --border: rgba(230, 236, 255, 0.16);
+  --border-strong: rgba(230, 236, 255, 0.28);
+  --border-soft: rgba(230, 236, 255, 0.08);
+  --chip-bg: rgba(230, 236, 255, 0.08);
+  --card-front-bg: #1b2742;
+  --card-front-border: rgba(230, 236, 255, 0.08);
+  --card-front-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.25),
+    0 8px 16px rgba(0, 0, 0, 0.4);
+  --card-back: linear-gradient(145deg, #5b4bd6, #3566c9 55%, #1c8fb0);
+  --card-back-border: rgba(255, 255, 255, 0.25);
+  --card-back-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.35),
+    0 8px 16px rgba(0, 0, 0, 0.45);
+  --card-back-star: rgba(255, 255, 255, 0.9);
+  --play-gradient: linear-gradient(120deg, #7b6bf0, #00a3c4);
+  --play-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+  --play-shadow-hover: 0 16px 30px rgba(0, 0, 0, 0.6);
+  --title-gradient: linear-gradient(120deg, #a99cff, #35d6f2);
+  --focus-ring: rgba(139, 124, 246, 0.25);
+  --orb-1: rgba(139, 124, 246, 0.32);
+  --orb-2: rgba(0, 184, 217, 0.22);
+  --orb-3: rgba(52, 211, 153, 0.2);
+  --body-bg:
+    radial-gradient(circle at 12% 12%, rgba(124, 92, 231, 0.28) 0, transparent 42%),
+    radial-gradient(circle at 88% 8%, rgba(0, 184, 217, 0.22) 0, transparent 46%),
+    radial-gradient(circle at 50% 105%, rgba(46, 194, 126, 0.18) 0, transparent 52%),
+    linear-gradient(160deg, #0b1220 0%, #0f172a 100%);
+  color-scheme: dark;
+}

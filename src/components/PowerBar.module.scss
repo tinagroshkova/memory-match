@@ -1,0 +1,111 @@
+.powerBar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.power {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-translucent);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.power:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  background: var(--surface-strong);
+}
+
+.power:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.isActive {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 0 0 3px var(--focus-ring), var(--shadow);
+  animation: power-pulse 1.2s ease-in-out infinite;
+}
+
+.emoji {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.blurb {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: auto;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+@keyframes power-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px var(--focus-ring), var(--shadow);
+  }
+  50% {
+    box-shadow: 0 0 0 5px var(--focus-ring), 0 0 22px var(--focus-ring),
+      var(--shadow);
+  }
+}
+
+@media (max-width: 640px) {
+  .power {
+    justify-content: center;
+    padding: 9px 6px;
+  }
+
+  .text {
+    display: none;
+  }
+
+  .count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    margin: 0;
+    background: var(--primary);
+    color: var(--primary-contrast);
+  }
+}
