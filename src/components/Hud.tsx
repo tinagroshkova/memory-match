@@ -1,4 +1,4 @@
-import { comboMultiplier, type DifficultyConfig } from '../game'
+import { COMBO_TIMEOUT_MS, comboMultiplier, type DifficultyConfig } from '../game'
 import type { Theme } from '../storage'
 import shared from '../styles/shared.module.scss'
 import styles from './Hud.module.scss'
@@ -71,9 +71,14 @@ export const Hud = ({
           key={combo}
           className={`${styles.hudStat} ${styles.combo}`}
           aria-label={`Combo multiplier x${comboMultiplier(combo).toFixed(1)}`}
-          title={`${combo} matches in a row`}
+          title={`${combo} matches in a row — keep it going!`}
         >
           🔥 x{comboMultiplier(combo).toFixed(1)}
+          <span
+            className={styles.comboTimer}
+            style={{ animationDuration: `${COMBO_TIMEOUT_MS}ms` }}
+            aria-hidden="true"
+          />
         </span>
       )}
     </div>

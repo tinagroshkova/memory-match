@@ -6,15 +6,29 @@ import {
   createSeededRandom,
   dateKey,
   DAILY_PAIRS,
+  DAILY_WILDCARDS,
   DIFFICULTIES,
   formatTime,
   initialPowerUses,
   milestoneForCombo,
+  resolveMatch,
   scoreMatch,
   shuffle,
   starsFor,
   timeBonus,
+  type Card,
 } from './game'
+
+const makeCard = (
+  overrides: Partial<Card> & Pick<Card, 'id' | 'pairKey'>,
+): Card => ({
+  kind: 'normal',
+  emoji: '🐶',
+  name: 'Dog',
+  flipped: false,
+  matched: false,
+  ...overrides,
+})
 
 const seeded = (seed: number): (() => number) => {
   let state = seed >>> 0
@@ -48,6 +62,81 @@ describe('createDeck', () => {
   it('starts with all cards face down and unmatched', () => {
     const deck = createDeck(6, seeded(7))
     expect(deck.every((card) => !card.flipped && !card.matched)).toBe(true)
+  })
+
+  it('adds wildcards without breaking the pairs', () => {
+    const deck = createDeck(4, seeded(11), 2)
+    expect(deck).toHaveLength(4 * 2 + 2)
+    expect(deck.filter((card) => card.kind === 'wild')).toHaveLength(2)
+    expect(deck.filter((card) => card.kind === 'normal')).toHaveLength(8)
+    expect(new Set(deck.map((card) => card.id)).size).toBe(deck.length)
+  })
+
+  it('never creates more wildcards than pairs', () => {
+    const deck = createDeck(2, seeded(5), 9)
+    expect(deck.filter((card) => card.kind === 'wild')).toHaveLength(2)
+  })
+})
+
+describe('resolveMatch', () => {
+  it('matches two cards with the same pair key', () => {
+    const cards = [
+      makeCard({ id: 'a', pairKey: 'p1' }),
+      makeCard({ id: 'b', pairKey: 'p1' }),
+      makeCard({ id: 'c', pairKey: 'p2' }),
+    ]
+
+    expect(resolveMatch(cards, 0, 1)).toEqual({
+      indexes: [0, 1],
+      wild: false,
+      effectIndex: 1,
+    })
+  })
+
+  it('rejects cards from different pairs', () => {
+    const cards = [
+      makeCard({ id: 'a', pairKey: 'p1' }),
+      makeCard({ id: 'c', pairKey: 'p2' }),
+    ]
+
+    expect(resolveMatch(cards, 0, 1)).toBeNull()
+  })
+
+  it('lets a wildcard clear the whole pair when flipped first', () => {
+    const cards = [
+      makeCard({ id: 'w', pairKey: 'wild-0', kind: 'wild' }),
+      makeCard({ id: 'a', pairKey: 'p1' }),
+      makeCard({ id: 'b', pairKey: 'p1' }),
+    ]
+
+    expect(resolveMatch(cards, 0, 1)).toEqual({
+      indexes: [0, 1, 2],
+      wild: true,
+      effectIndex: 1,
+    })
+  })
+
+  it('lets a wildcard clear the whole pair when flipped second', () => {
+    const cards = [
+      makeCard({ id: 'a', pairKey: 'p1' }),
+      makeCard({ id: 'b', pairKey: 'p1' }),
+      makeCard({ id: 'w', pairKey: 'wild-0', kind: 'wild' }),
+    ]
+
+    expect(resolveMatch(cards, 0, 2)).toEqual({
+      indexes: [0, 2, 1],
+      wild: true,
+      effectIndex: 0,
+    })
+  })
+
+  it('does not let two wildcards match each other', () => {
+    const cards = [
+      makeCard({ id: 'w1', pairKey: 'wild-0', kind: 'wild' }),
+      makeCard({ id: 'w2', pairKey: 'wild-1', kind: 'wild' }),
+    ]
+
+    expect(resolveMatch(cards, 0, 1)).toBeNull()
   })
 })
 
@@ -136,8 +225,20 @@ describe('timeBonus', () => {
 })
 
 describe('power-ups', () => {
-  it('starts every game with one of each power-up', () => {
+  it('starts medium games with one of each power-up', () => {
     expect(initialPowerUses()).toEqual({ peek: 1, shuffle: 1, shield: 1 })
+    expect(initialPowerUses('medium')).toEqual({ peek: 1, shuffle: 1, shield: 1 })
+  })
+
+  it('scales power-ups by difficulty', () => {
+    expect(initialPowerUses('easy')).toEqual({ peek: 2, shuffle: 2, shield: 2 })
+    expect(initialPowerUses('hard')).toEqual({ peek: 1, shuffle: 1, shield: 0 })
+  })
+
+  it('returns a fresh copy so uses cannot leak between games', () => {
+    const uses = initialPowerUses('easy')
+    uses.peek = 0
+    expect(initialPowerUses('easy').peek).toBe(2)
   })
 })
 
@@ -165,7 +266,7 @@ describe('daily challenge', () => {
     const second = createDailyDeck(date).map((card) => card.emoji)
 
     expect(first).toEqual(second)
-    expect(first).toHaveLength(DAILY_PAIRS * 2)
+    expect(first).toHaveLength(DAILY_PAIRS * 2 + DAILY_WILDCARDS)
   })
 
   it('creates a different deck on another day', () => {

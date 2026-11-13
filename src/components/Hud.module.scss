@@ -39,9 +39,33 @@
 }
 
 .combo {
+  position: relative;
+  overflow: hidden;
   background: var(--primary-soft);
   color: var(--primary);
   animation: combo-pop 0.3s ease, combo-glow 1.4s ease-in-out infinite;
+}
+
+.comboTimer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--primary);
+  transform-origin: left center;
+  animation-name: combo-countdown;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes combo-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
 }
 
 .hudActions {

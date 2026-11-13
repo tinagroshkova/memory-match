@@ -1,4 +1,4 @@
-type SoundName = 'flip' | 'match' | 'mismatch' | 'win' | 'power' | 'milestone'
+type SoundName = 'flip' | 'match' | 'mismatch' | 'win' | 'power' | 'milestone' | 'wild'
 
 interface Tone {
   frequency: number
@@ -32,6 +32,11 @@ const SOUNDS: Record<SoundName, Tone[]> = {
     { frequency: 587.33, start: 0, duration: 0.1, type: 'sine', volume: 0.18 },
     { frequency: 783.99, start: 0.09, duration: 0.1, type: 'sine', volume: 0.2 },
     { frequency: 1174.66, start: 0.18, duration: 0.28, type: 'sine', volume: 0.22 },
+  ],
+  wild: [
+    { frequency: 880, start: 0, duration: 0.08, type: 'triangle', volume: 0.18 },
+    { frequency: 1174.66, start: 0.06, duration: 0.1, type: 'sine', volume: 0.2 },
+    { frequency: 1567.98, start: 0.14, duration: 0.22, type: 'sine', volume: 0.2 },
   ],
 }
 

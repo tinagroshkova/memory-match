@@ -1,4 +1,10 @@
-import { DAILY_PAIRS, DIFFICULTIES, formatTime, type Difficulty } from '../game'
+import {
+  DAILY_PAIRS,
+  DAILY_WILDCARDS,
+  DIFFICULTIES,
+  formatTime,
+  type Difficulty,
+} from '../game'
 import type { BestResult, BestResults, Theme } from '../storage'
 import shared from '../styles/shared.module.scss'
 import styles from './StartScreen.module.scss'
@@ -78,7 +84,8 @@ export const StartScreen = ({
       <span className={styles.dailyBody}>
         <span className={styles.dailyTitle}>Daily Challenge</span>
         <span className={styles.dailyMeta}>
-          {dailyDate} · {DAILY_PAIRS} pairs · one deck a day
+          {dailyDate} · {DAILY_PAIRS} pairs · {DAILY_WILDCARDS} wild · one deck a
+          day
         </span>
         <span className={styles.dailyBest}>
           {dailyBest
@@ -104,7 +111,8 @@ export const StartScreen = ({
         {soundOn ? '🔊' : '🔇'} <span>{soundOn ? 'Sound on' : 'Sound off'}</span>
       </button>
       <p className={styles.startHint}>
-        Chain matches for combo multipliers. Finish fast for a time bonus.
+        Chain matches for combo multipliers. Finish fast for a time bonus. Match
+        a 🌈 wildcard with any card to clear its whole pair!
       </p>
     </div>
   </main>

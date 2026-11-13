@@ -6,6 +6,7 @@ export interface MatchEffect {
   index: number
   points: number
   combo: number
+  wild?: boolean
 }
 
 interface CardProps {
@@ -36,6 +37,7 @@ export const Card = ({
         styles.card,
         revealed ? styles.isRevealed : '',
         card.matched ? styles.isMatched : '',
+        card.kind === 'wild' ? styles.isWild : '',
         wrong ? styles.isWrong : '',
         effect ? styles.hasEffect : '',
       ]
@@ -58,6 +60,7 @@ export const Card = ({
       {effect && (
         <span key={effect.id} className={styles.matchFx} aria-hidden="true">
           <span className={styles.points}>+{effect.points}</span>
+          {effect.wild && <span className={styles.wildTag}>Wild pair!</span>}
           {effect.combo >= 2 && (
             <span className={styles.comboTag}>
               combo x{comboMultiplier(effect.combo).toFixed(1)}

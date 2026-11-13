@@ -6,6 +6,7 @@ export interface DifficultyConfig {
   emoji: string
   pairs: number
   columns: number
+  wildcards: number
   blurb: string
 }
 
@@ -15,7 +16,8 @@ const EASY: DifficultyConfig = {
   emoji: '🌱',
   pairs: 4,
   columns: 4,
-  blurb: '8 cards',
+  wildcards: 1,
+  blurb: '9 cards · 1 wild',
 }
 
 const MEDIUM: DifficultyConfig = {
@@ -24,7 +26,8 @@ const MEDIUM: DifficultyConfig = {
   emoji: '🌻',
   pairs: 6,
   columns: 4,
-  blurb: '12 cards',
+  wildcards: 1,
+  blurb: '13 cards · 1 wild',
 }
 
 const HARD: DifficultyConfig = {
@@ -33,7 +36,8 @@ const HARD: DifficultyConfig = {
   emoji: '🚀',
   pairs: 8,
   columns: 4,
-  blurb: '16 cards',
+  wildcards: 2,
+  blurb: '18 cards · 2 wilds',
 }
 
 const DIFFICULTY_BY_ID: Record<Difficulty, DifficultyConfig> = {
@@ -78,13 +82,68 @@ export const EMOJI_POOL: readonly EmojiEntry[] = [
   { emoji: '🦖', name: 'Dinosaur' },
 ]
 
+export type CardKind = 'normal' | 'wild'
+
 export interface Card {
   id: string
   pairKey: string
+  kind: CardKind
   emoji: string
   name: string
   flipped: boolean
   matched: boolean
+}
+
+export const WILD_EMOJI = '🌈'
+export const WILD_CLEAR_BONUS = 100
+
+export const isWildcard = (card: Card): boolean => card.kind === 'wild'
+
+export interface MatchResolution {
+  indexes: number[]
+  wild: boolean
+  effectIndex: number
+}
+
+export const resolveMatch = (
+  cards: readonly Card[],
+  firstIndex: number,
+  secondIndex: number,
+): MatchResolution | null => {
+  const first = cards[firstIndex]
+  const second = cards[secondIndex]
+
+  if (!first || !second) {
+    return null
+  }
+
+  const firstWild = isWildcard(first)
+  const secondWild = isWildcard(second)
+
+  if (firstWild && secondWild) {
+    return null
+  }
+
+  if (firstWild || secondWild) {
+    const normal = firstWild ? second : first
+    const normalIndex = firstWild ? secondIndex : firstIndex
+    const twinIndex = cards.findIndex(
+      (card, index) => card.pairKey === normal.pairKey && index !== normalIndex,
+    )
+    const indexes = [firstIndex, secondIndex]
+
+    if (twinIndex >= 0) {
+      indexes.push(twinIndex)
+    }
+
+    return { indexes, wild: true, effectIndex: normalIndex }
+  }
+
+  if (first.pairKey !== second.pairKey) {
+    return null
+  }
+
+  return { indexes: [firstIndex, secondIndex], wild: false, effectIndex: secondIndex }
 }
 
 export const shuffle = <T>(
@@ -110,6 +169,7 @@ export const shuffle = <T>(
 export const createDeck = (
   pairs: number,
   random: () => number = Math.random,
+  wildcards: number = 0,
 ): Card[] => {
   const pool = [...EMOJI_POOL]
   const chosen: EmojiEntry[] = []
@@ -127,6 +187,7 @@ export const createDeck = (
     {
       id: `${pairIndex}-a`,
       pairKey: `pair-${pairIndex}`,
+      kind: 'normal',
       emoji: entry.emoji,
       name: entry.name,
       flipped: false,
@@ -135,6 +196,7 @@ export const createDeck = (
     {
       id: `${pairIndex}-b`,
       pairKey: `pair-${pairIndex}`,
+      kind: 'normal',
       emoji: entry.emoji,
       name: entry.name,
       flipped: false,
@@ -142,11 +204,25 @@ export const createDeck = (
     },
   ])
 
+  const wildCount = Math.max(0, Math.min(Math.floor(wildcards), count))
+  for (let i = 0; i < wildCount; i += 1) {
+    cards.push({
+      id: `wild-${i}`,
+      pairKey: `wild-${i}`,
+      kind: 'wild',
+      emoji: WILD_EMOJI,
+      name: 'Wildcard',
+      flipped: false,
+      matched: false,
+    })
+  }
+
   return shuffle(cards, random)
 }
 
 export const DAILY_PAIRS = 6
 export const DAILY_COLUMNS = 4
+export const DAILY_WILDCARDS = 1
 
 export const dateKey = (date: Date = new Date()): string => {
   const year = date.getFullYear()
@@ -176,7 +252,7 @@ export const createSeededRandom = (seed: number): (() => number) => {
 }
 
 export const createDailyDeck = (date: Date = new Date()): Card[] =>
-  createDeck(DAILY_PAIRS, createSeededRandom(dailySeed(date)))
+  createDeck(DAILY_PAIRS, createSeededRandom(dailySeed(date)), DAILY_WILDCARDS)
 
 export const dailyConfig: DifficultyConfig = {
   id: 'medium',
@@ -184,7 +260,8 @@ export const dailyConfig: DifficultyConfig = {
   emoji: '📅',
   pairs: DAILY_PAIRS,
   columns: DAILY_COLUMNS,
-  blurb: `${DAILY_PAIRS * 2} cards`,
+  wildcards: DAILY_WILDCARDS,
+  blurb: `${DAILY_PAIRS * 2 + DAILY_WILDCARDS} cards · ${DAILY_WILDCARDS} wild`,
 }
 
 export const starsFor = (moves: number, pairs: number): number => {
@@ -202,6 +279,7 @@ export const SPEED_BONUS_POINTS = 50
 export const SPEED_BONUS_WINDOW_MS = 4000
 export const COMBO_STEP = 0.5
 export const MAX_COMBO_MULTIPLIER = 5
+export const COMBO_TIMEOUT_MS = 7000
 export const TIME_BONUS_PER_SECOND = 25
 export const TIME_BONUS_SECONDS_PER_PAIR = 8
 
@@ -259,10 +337,14 @@ export const POWER_UPS: readonly PowerUpDefinition[] = [
   { id: 'shield', label: 'Shield', emoji: '🛡️', blurb: 'Save your combo' },
 ]
 
-export const initialPowerUses = (): PowerUses => ({
-  peek: 1,
-  shuffle: 1,
-  shield: 1,
+export const POWER_USES_BY_DIFFICULTY: Record<Difficulty, PowerUses> = {
+  easy: { peek: 2, shuffle: 2, shield: 2 },
+  medium: { peek: 1, shuffle: 1, shield: 1 },
+  hard: { peek: 1, shuffle: 1, shield: 0 },
+}
+
+export const initialPowerUses = (difficulty: Difficulty = 'medium'): PowerUses => ({
+  ...POWER_USES_BY_DIFFICULTY[difficulty],
 })
 
 export interface ComboMilestone {

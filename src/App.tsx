@@ -10,6 +10,7 @@ import { PowerBar } from './components/PowerBar'
 import { StartScreen } from './components/StartScreen'
 import { WinScreen } from './components/WinScreen'
 import {
+  COMBO_TIMEOUT_MS,
   createDailyDeck,
   createDeck,
   dailyConfig,
@@ -18,11 +19,13 @@ import {
   formatTime,
   initialPowerUses,
   milestoneForCombo,
+  resolveMatch,
   scoreMatch,
   shuffle,
   SPEED_BONUS_WINDOW_MS,
   starsFor,
   timeBonus,
+  WILD_CLEAR_BONUS,
   type Card,
   type Difficulty,
   type PowerName,
@@ -83,6 +86,7 @@ export const App = () => {
   const effectTimer = useRef<number | null>(null)
   const peekTimer = useRef<number | null>(null)
   const milestoneTimer = useRef<number | null>(null)
+  const comboTimer = useRef<number | null>(null)
   const effectIdRef = useRef(0)
   const milestoneIdRef = useRef(0)
   const shieldedRef = useRef(false)
@@ -115,6 +119,28 @@ export const App = () => {
       window.clearTimeout(milestoneTimer.current)
       milestoneTimer.current = null
     }
+    if (comboTimer.current !== null) {
+      window.clearTimeout(comboTimer.current)
+      comboTimer.current = null
+    }
+  }, [])
+
+  const clearComboTimer = useCallback(() => {
+    if (comboTimer.current !== null) {
+      window.clearTimeout(comboTimer.current)
+      comboTimer.current = null
+    }
+  }, [])
+
+  const scheduleComboDecay = useCallback(() => {
+    if (comboTimer.current !== null) {
+      window.clearTimeout(comboTimer.current)
+    }
+    comboTimer.current = window.setTimeout(() => {
+      comboTimer.current = null
+      comboRef.current = 0
+      setCombo(0)
+    }, COMBO_TIMEOUT_MS)
   }, [])
 
   useEffect(() => clearTimers, [clearTimers])
@@ -169,7 +195,7 @@ export const App = () => {
       setCards(
         nextMode === 'daily'
           ? createDailyDeck(new Date())
-          : createDeck(nextConfig.pairs),
+          : createDeck(nextConfig.pairs, Math.random, nextConfig.wildcards),
       )
       setFirstIndex(null)
       setWrongIndexes(null)
@@ -182,7 +208,7 @@ export const App = () => {
       setBestCombo(0)
       setTimeBonusPoints(0)
       setMatchEffect(null)
-      setPowerUses(initialPowerUses())
+      setPowerUses(initialPowerUses(nextConfig.id))
       setPeeking(false)
       setShielded(false)
       shieldedRef.current = false
@@ -259,6 +285,7 @@ export const App = () => {
 
   const finishGame = useCallback(
     (finalMoves: number) => {
+      clearComboTimer()
       const timeMs = startedAtRef.current !== null ? Date.now() - startedAtRef.current : 0
       const bonus = timeBonus(timeMs, config.pairs)
       const finalScore = scoreRef.current + bonus
@@ -286,7 +313,7 @@ export const App = () => {
         setNewBest(false)
       }
     },
-    [best, config.pairs, dailyBest, dailyDate, difficulty, mode],
+    [best, clearComboTimer, config.pairs, dailyBest, dailyDate, difficulty, mode],
   )
 
   const goHome = useCallback(() => {
@@ -301,7 +328,7 @@ export const App = () => {
     setBestCombo(0)
     setTimeBonusPoints(0)
     setMatchEffect(null)
-    setPowerUses(initialPowerUses())
+    setPowerUses(initialPowerUses(config.id))
     setPeeking(false)
     setShielded(false)
     shieldedRef.current = false
@@ -310,7 +337,7 @@ export const App = () => {
     comboRef.current = 0
     bestComboRef.current = 0
     firstFlipAtRef.current = null
-  }, [clearTimers])
+  }, [clearTimers, config.id])
 
   const handleFlip = (index: number) => {
     if (screen !== 'playing' || locked) {
@@ -347,18 +374,23 @@ export const App = () => {
       prev.map((item, i) => (i === index ? { ...item, flipped: true } : item)),
     )
 
-    if (firstCard.pairKey === card.pairKey) {
+    const resolution = resolveMatch(cards, firstIndex, index)
+
+    if (resolution) {
       const matchDurationMs =
         firstFlipAtRef.current !== null
           ? Date.now() - firstFlipAtRef.current
           : SPEED_BONUS_WINDOW_MS
       firstFlipAtRef.current = null
 
+      const { indexes: clearedIndexes, wild: wildUsed, effectIndex } = resolution
+      const wildBonus = wildUsed ? WILD_CLEAR_BONUS : 0
+
       const nextCombo = comboRef.current + 1
       const earned = scoreMatch({ combo: nextCombo, matchDurationMs })
       const milestoneHit = milestoneForCombo(nextCombo)
       const milestoneBonus = milestoneHit?.bonus ?? 0
-      const nextScore = scoreRef.current + earned.points + milestoneBonus
+      const nextScore = scoreRef.current + earned.points + wildBonus + milestoneBonus
 
       comboRef.current = nextCombo
       scoreRef.current = nextScore
@@ -369,6 +401,8 @@ export const App = () => {
         bestComboRef.current = nextCombo
         setBestCombo(nextCombo)
       }
+
+      scheduleComboDecay()
 
       if (milestoneHit) {
         milestoneIdRef.current += 1
@@ -388,19 +422,23 @@ export const App = () => {
       }
       setMatchEffect({
         id: effectIdRef.current,
-        index,
-        points: earned.points,
+        index: effectIndex,
+        points: earned.points + wildBonus,
         combo: nextCombo,
+        wild: wildUsed,
       })
       effectTimer.current = window.setTimeout(() => {
         setMatchEffect(null)
         effectTimer.current = null
       }, 1000)
 
-      playSound(milestoneHit ? 'milestone' : 'match', soundRef.current)
+      playSound(
+        wildUsed ? 'wild' : milestoneHit ? 'milestone' : 'match',
+        soundRef.current,
+      )
       setCards((prev) =>
         prev.map((item, i) =>
-          i === firstIndex || i === index
+          clearedIndexes.includes(i)
             ? { ...item, matched: true, flipped: true }
             : item,
         ),
@@ -421,6 +459,7 @@ export const App = () => {
       shieldedRef.current = false
       setShielded(false)
     } else {
+      clearComboTimer()
       comboRef.current = 0
       setCombo(0)
     }
@@ -495,7 +534,8 @@ export const App = () => {
             onFlip={handleFlip}
           />
           <p className={styles.gameTip}>
-            Flip two cards. Chain matches to grow your combo!
+            Flip two cards. Chain matches to grow your combo — it fades if you
+            wait too long! A 🌈 wild clears a whole pair.
           </p>
         </div>
       )}
